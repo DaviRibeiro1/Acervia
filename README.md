@@ -38,6 +38,16 @@ O aplicativo utiliza o **Acervia Design System v0.1**, provido via `ui.theme`:
 
 ---
 
+## 🔄 Integração Contínua (CI)
+
+O projeto conta com Integração Contínua configurada via **GitHub Actions** (`.github/workflows/android.yml`), executando automaticamente a cada `push` e `pull_request`:
+- **Ambiente:** Ubuntu Latest com JDK 21
+- **Testes Unitários:** `./gradlew testDebugUnitTest`
+- **Compilação do App:** `./gradlew assembleDebug`
+- **Relatórios:** Upload automático de relatórios dos testes executados.
+
+---
+
 ## 🚀 Como Executar o Projeto
 
 1. Abra o projeto no **Android Studio**.
