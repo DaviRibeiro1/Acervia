@@ -5,9 +5,20 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 
+enum class TemaOpcao {
+    SISTEMA,
+    CLARO,
+    ESCURO,
+}
+
 @Composable
 fun AcerviaTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    opcaoTema: TemaOpcao = TemaOpcao.SISTEMA,
+    darkTheme: Boolean = when (opcaoTema) {
+        TemaOpcao.SISTEMA -> isSystemInDarkTheme()
+        TemaOpcao.CLARO -> false
+        TemaOpcao.ESCURO -> true
+    },
     content: @Composable () -> Unit,
 ) {
     val extra = if (darkTheme) DarkExtra else LightExtra
