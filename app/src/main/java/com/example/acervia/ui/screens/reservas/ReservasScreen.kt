@@ -393,13 +393,14 @@ private fun ItemLinhaHistorico(
     onReservaClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val dataFormatada = SimpleDateFormat("dd/MM", Locale.getDefault()).format(Date(reserva.reservadoEm))
+    val dataReservado = SimpleDateFormat("dd/MM", Locale.getDefault()).format(Date(reserva.reservadoEm))
+    val dataExpirada = SimpleDateFormat("dd/MM", Locale.getDefault()).format(Date(reserva.expiraEm))
 
     val (iconeStatus, corStatus, textoStatus) = when (reserva.status) {
-        StatusReserva.RETIRADA -> Triple(Icons.Outlined.CheckCircle, AppTheme.extra.success, "Retirado em $dataFormatada")
-        StatusReserva.EXPIRADA -> Triple(Icons.Outlined.Schedule, MaterialTheme.colorScheme.error, "Expirada em $dataFormatada")
-        StatusReserva.CANCELADA -> Triple(Icons.Outlined.Cancel, MaterialTheme.colorScheme.onSurfaceVariant, "Cancelada em $dataFormatada")
-        StatusReserva.ATIVA -> Triple(Icons.Outlined.CheckCircle, AppTheme.extra.success, "Ativa em $dataFormatada")
+        StatusReserva.RETIRADA -> Triple(Icons.Outlined.CheckCircle, AppTheme.extra.success, "Retirado em $dataReservado")
+        StatusReserva.EXPIRADA -> Triple(Icons.Outlined.Schedule, MaterialTheme.colorScheme.error, "Expirada em $dataExpirada")
+        StatusReserva.CANCELADA -> Triple(Icons.Outlined.Cancel, MaterialTheme.colorScheme.onSurfaceVariant, "Cancelada em $dataReservado")
+        StatusReserva.ATIVA -> Triple(Icons.Outlined.CheckCircle, AppTheme.extra.success, "Ativa em $dataReservado")
     }
 
     Row(

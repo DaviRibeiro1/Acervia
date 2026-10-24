@@ -29,16 +29,24 @@ fun SeloPrazo(
     texto: String,
     urgente: Boolean,
     modifier: Modifier = Modifier,
+    expirada: Boolean = false,
 ) {
     val backgroundColor: Color
     val contentColor: Color
 
-    if (urgente) {
-        backgroundColor = AppTheme.extra.accentContainer
-        contentColor = AppTheme.extra.onAccentContainer
-    } else {
-        backgroundColor = MaterialTheme.colorScheme.primaryContainer
-        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+    when {
+        expirada -> {
+            backgroundColor = MaterialTheme.colorScheme.errorContainer
+            contentColor = MaterialTheme.colorScheme.error
+        }
+        urgente -> {
+            backgroundColor = AppTheme.extra.accentContainer
+            contentColor = AppTheme.extra.onAccentContainer
+        }
+        else -> {
+            backgroundColor = MaterialTheme.colorScheme.primaryContainer
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+        }
     }
 
     Row(
@@ -74,6 +82,7 @@ private fun SeloPrazoLightPreview() {
         ) {
             SeloPrazo(texto = "Retire até hoje · 18h", urgente = true)
             SeloPrazo(texto = "Retire até qui, 15/10 · 18h", urgente = false)
+            SeloPrazo(texto = "Reserva expirada", urgente = false, expirada = true)
         }
     }
 }
@@ -88,6 +97,7 @@ private fun SeloPrazoDarkPreview() {
         ) {
             SeloPrazo(texto = "Retire até hoje · 18h", urgente = true)
             SeloPrazo(texto = "Retire até qui, 15/10 · 18h", urgente = false)
+            SeloPrazo(texto = "Reserva expirada", urgente = false, expirada = true)
         }
     }
 }

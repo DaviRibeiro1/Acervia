@@ -48,6 +48,8 @@ fun CartaoReserva(
     statusBiblioteca: String,
     modifier: Modifier = Modifier,
     capaUrl: String? = null,
+    expirada: Boolean = false,
+    copiarHabilitado: Boolean = true,
     onCartaoClick: () -> Unit = {},
     onCopiarCodigoClick: (String) -> Unit = {},
 ) {
@@ -79,6 +81,7 @@ fun CartaoReserva(
             SeloPrazo(
                 texto = prazoTexto,
                 urgente = prazoUrgente,
+                expirada = expirada,
             )
 
             // 2. Capa + Título + Autor
@@ -171,12 +174,13 @@ fun CartaoReserva(
                     Text(
                         text = codigoFormatado,
                         style = AppTextStyles.otp,
-                        color = MaterialTheme.colorScheme.onSurface,
+                        color = if (copiarHabilitado) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
 
                 OutlinedButton(
                     onClick = { onCopiarCodigoClick(codigoRetirada) },
+                    enabled = copiarHabilitado,
                     modifier = Modifier.heightIn(min = 48.dp),
                     shape = MaterialTheme.shapes.medium,
                 ) {
@@ -241,13 +245,15 @@ private fun CartaoReservaLightPreview() {
 private fun CartaoReservaDarkPreview() {
     AcerviaTheme(darkTheme = true) {
         CartaoReserva(
-            prazoTexto = "Retire até qui, 15/10 · 18h",
+            prazoTexto = "Reserva expirada",
             prazoUrgente = false,
             tituloLivro = "O Senhor dos Anéis: A Sociedade do Anel",
             autorLivro = "J.R.R. Tolkien",
             codigoRetirada = "931204",
             localBiblioteca = "Biblioteca Central",
             statusBiblioteca = "Aberta agora, fecha às 18h",
+            expirada = true,
+            copiarHabilitado = false,
             modifier = Modifier.padding(16.dp),
         )
     }

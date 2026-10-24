@@ -221,6 +221,8 @@ fun SuaReservaContent(
                             codigo = reserva.codigoRetirada,
                             prazoTexto = uiState.prazoTexto,
                             prazoUrgente = uiState.prazoUrgente,
+                            status = reserva.status,
+                            expiraEm = reserva.expiraEm,
                             onCopiarCodigo = { cod ->
                                 val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                                 val clip = ClipData.newPlainText("Código de Retirada", cod)
@@ -324,6 +326,8 @@ private fun CartaoDoCodigo(
     codigo: String,
     prazoTexto: String,
     prazoUrgente: Boolean,
+    status: StatusReserva,
+    expiraEm: Long,
     onCopiarCodigo: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -331,6 +335,19 @@ private fun CartaoDoCodigo(
         "${codigo.substring(0, 3)} ${codigo.substring(3)}"
     } else {
         codigo
+    }
+
+    val ehAtiva = status == StatusReserva.ATIVA
+    val ehExpirada = status == StatusReserva.EXPIRADA
+
+    val textoSelo = when {
+        ehExpirada -> {
+            val dataExpirada = SimpleDateFormat("dd/MM", Locale.getDefault()).format(Date(expiraEm))
+            "Reserva expirada em $dataExpirada"
+        }
+        status == StatusReserva.CANCELADA -> "Reserva cancelada"
+        status == StatusReserva.RETIRADA -> "Reserva retirada"
+        else -> prazoTexto
     }
 
     Surface(
@@ -362,12 +379,13 @@ private fun CartaoDoCodigo(
                     Text(
                         text = codigoFormatado,
                         style = AppTextStyles.otp,
-                        color = MaterialTheme.colorScheme.onSurface,
+                        color = if (ehAtiva) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
 
                 OutlinedButton(
                     onClick = { onCopiarCodigo(codigo) },
+                    enabled = ehAtiva,
                     modifier = Modifier.heightIn(min = 48.dp),
                     shape = MaterialTheme.shapes.medium,
                 ) {
@@ -384,8 +402,9 @@ private fun CartaoDoCodigo(
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
             SeloPrazo(
-                texto = prazoTexto,
+                texto = textoSelo,
                 urgente = prazoUrgente,
+                expirada = ehExpirada,
             )
         }
     }
