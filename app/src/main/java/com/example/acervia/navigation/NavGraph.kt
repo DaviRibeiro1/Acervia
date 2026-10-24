@@ -13,6 +13,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.acervia.ui.screens.main.MainContainerScreen
 
 object NavRoutes {
     const val SPLASH = "splash"
@@ -20,6 +21,7 @@ object NavRoutes {
     const val LOGIN = "login"
     const val CODIGO = "codigo"
     const val FALTA_POUCO = "falta_pouco"
+    const val MAIN_CONTAINER = "main_container"
     const val HOME = "home"
     const val CATALOGO = "catalogo"
     const val RESERVAS = "reservas"
@@ -50,19 +52,10 @@ fun AcerviaNavHost(
             PlaceholderScreen(title = "Código de Acesso", onNext = { navController.navigate(NavRoutes.FALTA_POUCO) })
         }
         composable(NavRoutes.FALTA_POUCO) {
-            PlaceholderScreen(title = "Falta Pouco", onNext = { navController.navigate(NavRoutes.HOME) })
+            PlaceholderScreen(title = "Falta Pouco", onNext = { navController.navigate(NavRoutes.MAIN_CONTAINER) })
         }
-        composable(NavRoutes.HOME) {
-            PlaceholderScreen(title = "Home", onNext = { navController.navigate(NavRoutes.CATALOGO) })
-        }
-        composable(NavRoutes.CATALOGO) {
-            PlaceholderScreen(title = "Catálogo", onNext = { navController.navigate(NavRoutes.RESERVAS) })
-        }
-        composable(NavRoutes.RESERVAS) {
-            PlaceholderScreen(title = "Reservas", onNext = { navController.navigate(NavRoutes.AJUSTES) })
-        }
-        composable(NavRoutes.AJUSTES) {
-            PlaceholderScreen(title = "Ajustes", onNext = { navController.navigate(NavRoutes.HOME) })
+        composable(NavRoutes.MAIN_CONTAINER) {
+            MainContainerScreen(rootNavController = navController)
         }
     }
 }
