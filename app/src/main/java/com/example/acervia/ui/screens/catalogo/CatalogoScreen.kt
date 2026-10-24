@@ -308,14 +308,16 @@ fun CatalogoContent(
                                 items = uiState.livros,
                                 key = { it.volumeId },
                             ) { livro ->
-                                ItemLivroCatalogo(
-                                    livro = livro,
-                                    onLivroClick = onLivroClick,
-                                )
-                                HorizontalDivider(
-                                    color = MaterialTheme.colorScheme.outlineVariant,
-                                    modifier = Modifier.padding(top = Space.s3),
-                                )
+                                Column {
+                                    ItemLivroCatalogo(
+                                        livro = livro,
+                                        onLivroClick = onLivroClick,
+                                    )
+                                    HorizontalDivider(
+                                        color = MaterialTheme.colorScheme.outlineVariant,
+                                        modifier = Modifier.padding(top = Space.s3),
+                                    )
+                                }
                             }
                         }
                     }
