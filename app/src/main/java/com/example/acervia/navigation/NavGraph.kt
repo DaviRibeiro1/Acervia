@@ -36,7 +36,7 @@ object NavRoutes {
 @Composable
 fun AcerviaNavHost(
     navController: NavHostController = rememberNavController(),
-    startDestination: String = NavRoutes.SPLASH,
+    startDestination: String = NavRoutes.MAIN_CONTAINER,
 ) {
     NavHost(
         navController = navController,
