@@ -13,6 +13,9 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.acervia.ui.screens.detalhes.DetalhesLivroScreen
+import com.example.acervia.ui.screens.detalhes.DetalhesLivroViewModel
 import com.example.acervia.ui.screens.main.MainContainerScreen
 
 object NavRoutes {
@@ -56,6 +59,13 @@ fun AcerviaNavHost(
         }
         composable(NavRoutes.MAIN_CONTAINER) {
             MainContainerScreen(rootNavController = navController)
+        }
+        composable(NavRoutes.DETALHES_LIVRO) {
+            val viewModel: DetalhesLivroViewModel = hiltViewModel()
+            DetalhesLivroScreen(
+                viewModel = viewModel,
+                onVoltarClick = { navController.popBackStack() },
+            )
         }
     }
 }
