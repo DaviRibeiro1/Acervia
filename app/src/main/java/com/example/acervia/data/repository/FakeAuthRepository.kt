@@ -1,10 +1,10 @@
 package com.example.acervia.data.repository
 
+import com.example.acervia.data.DemoConfig
 import com.example.acervia.domain.model.Perfil
 import com.example.acervia.domain.model.ResultadoLogin
 import com.example.acervia.domain.model.Sessao
 import com.example.acervia.domain.repository.AuthRepository
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -12,7 +12,9 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class FakeAuthRepository @Inject constructor() : AuthRepository {
+class FakeAuthRepository @Inject constructor(
+    private val demoConfig: DemoConfig,
+) : AuthRepository {
 
     private val sessaoDemo = Sessao(
         usuarioId = "usr_1",
@@ -29,11 +31,11 @@ class FakeAuthRepository @Inject constructor() : AuthRepository {
     override val sessao: Flow<Sessao?> = _sessao.asStateFlow()
 
     override suspend fun enviarCodigo(email: String) {
-        delay(500)
+        demoConfig.simularLatenciaEFalhas()
     }
 
     override suspend fun entrarComCodigo(email: String, codigo: String): ResultadoLogin {
-        delay(600)
+        demoConfig.simularLatenciaEFalhas()
         return if (codigo == "123456" || codigo.length == 6) {
             val novaSessao = Sessao(
                 usuarioId = "usr_${System.currentTimeMillis()}",
@@ -51,13 +53,13 @@ class FakeAuthRepository @Inject constructor() : AuthRepository {
     }
 
     override suspend fun entrarComGoogle(): ResultadoLogin {
-        delay(800)
+        demoConfig.simularLatenciaEFalhas()
         _sessao.value = sessaoDemo
         return ResultadoLogin.Sucesso(sessao = sessaoDemo, contaNova = false)
     }
 
     override suspend fun concluirCadastro(perfil: Perfil) {
-        delay(400)
+        demoConfig.simularLatenciaEFalhas()
         val atual = _sessao.value
         if (atual != null) {
             _sessao.value = atual.copy(perfil = perfil)
@@ -65,7 +67,7 @@ class FakeAuthRepository @Inject constructor() : AuthRepository {
     }
 
     override suspend fun sair() {
-        delay(300)
+        demoConfig.simularLatenciaEFalhas()
         _sessao.value = null
     }
 }

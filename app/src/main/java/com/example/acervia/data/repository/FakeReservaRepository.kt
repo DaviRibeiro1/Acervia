@@ -1,15 +1,17 @@
 package com.example.acervia.data.repository
 
+import com.example.acervia.data.DemoConfig
 import com.example.acervia.domain.model.Reserva
 import com.example.acervia.domain.model.ResultadoReserva
 import com.example.acervia.domain.model.StatusReserva
 import com.example.acervia.domain.repository.ReservaRepository
-import kotlinx.coroutines.delay
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class FakeReservaRepository @Inject constructor() : ReservaRepository {
+class FakeReservaRepository @Inject constructor(
+    private val demoConfig: DemoConfig,
+) : ReservaRepository {
 
     private val reservas = mutableListOf(
         Reserva(
@@ -57,7 +59,7 @@ class FakeReservaRepository @Inject constructor() : ReservaRepository {
     )
 
     override suspend fun reservar(livroId: String): ResultadoReserva {
-        delay(600)
+        demoConfig.simularLatenciaEFalhas()
         val jaExiste = reservas.find { it.volumeId == livroId && it.status == StatusReserva.ATIVA }
         if (jaExiste != null) {
             return ResultadoReserva.JaReservado(jaExiste)
@@ -82,17 +84,17 @@ class FakeReservaRepository @Inject constructor() : ReservaRepository {
     }
 
     override suspend fun listar(): List<Reserva> {
-        delay(400)
+        demoConfig.simularLatenciaEFalhas()
         return reservas.toList()
     }
 
     override suspend fun reserva(id: String): Reserva? {
-        delay(300)
+        demoConfig.simularLatenciaEFalhas()
         return reservas.find { it.id == id }
     }
 
     override suspend fun cancelar(id: String): Boolean {
-        delay(500)
+        demoConfig.simularLatenciaEFalhas()
         val index = reservas.indexOfFirst { it.id == id }
         if (index != -1) {
             val existente = reservas[index]

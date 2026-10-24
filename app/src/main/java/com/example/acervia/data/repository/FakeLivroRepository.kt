@@ -1,5 +1,6 @@
 package com.example.acervia.data.repository
 
+import com.example.acervia.data.DemoConfig
 import com.example.acervia.domain.model.HomeDados
 import com.example.acervia.domain.model.Livro
 import com.example.acervia.domain.model.LivroResumo
@@ -8,27 +9,13 @@ import com.example.acervia.domain.model.Reserva
 import com.example.acervia.domain.model.StatusReserva
 import com.example.acervia.domain.repository.LivroRepository
 import com.example.acervia.domain.repository.Ordem
-import kotlinx.coroutines.delay
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.random.Random
 
 @Singleton
-class FakeLivroRepository @Inject constructor() : LivroRepository {
-
-    var simularErro: Boolean = false
-    var simularSemConexao: Boolean = false
-
-    private suspend fun simularLatencia() {
-        val ms = Random.nextLong(300, 800)
-        delay(ms)
-        if (simularSemConexao) {
-            throw java.io.IOException("Sem conexão com a internet.")
-        }
-        if (simularErro) {
-            throw IllegalStateException("Erro ao carregar dados do servidor.")
-        }
-    }
+class FakeLivroRepository @Inject constructor(
+    private val demoConfig: DemoConfig,
+) : LivroRepository {
 
     private val acervoCompleto: List<Livro> = buildList {
         add(
@@ -189,7 +176,7 @@ class FakeLivroRepository @Inject constructor() : LivroRepository {
     )
 
     override suspend fun home(): HomeDados {
-        simularLatencia()
+        demoConfig.simularLatenciaEFalhas()
         val destaquesResumo = acervoCompleto.take(8).map { it.toResumo() }
         return HomeDados(
             nomeUsuario = "Marina",
@@ -205,7 +192,7 @@ class FakeLivroRepository @Inject constructor() : LivroRepository {
         ordem: Ordem,
         pagina: Int,
     ): Pagina<LivroResumo> {
-        simularLatencia()
+        demoConfig.simularLatenciaEFalhas()
         var lista = acervoCompleto.map { it.toResumo() }
 
         if (!q.isNullOrBlank()) {
@@ -246,7 +233,7 @@ class FakeLivroRepository @Inject constructor() : LivroRepository {
     }
 
     override suspend fun livro(id: String): Livro {
-        simularLatencia()
+        demoConfig.simularLatenciaEFalhas()
         return acervoCompleto.find { it.volumeId == id }
             ?: throw IllegalArgumentException("Livro não encontrado no acervo: $id")
     }
