@@ -28,12 +28,15 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -60,6 +63,7 @@ import com.example.acervia.ui.theme.Space
 fun DetalhesLivroScreen(
     viewModel: DetalhesLivroViewModel,
     onVoltarClick: () -> Unit,
+    onReservaConfirmada: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -69,6 +73,9 @@ fun DetalhesLivroScreen(
         onVoltarClick = onVoltarClick,
         onToggleDescricao = viewModel::toggleDescricaoExpandida,
         onTentarNovamente = viewModel::carregarDetalhes,
+        onAbrirConfirmacaoReserva = viewModel::onAbrirBottomSheetConfirmacao,
+        onFecharConfirmacaoReserva = viewModel::onFecharBottomSheetConfirmacao,
+        onConfirmarReserva = { viewModel.onConfirmarReserva(onReservaConfirmada) },
         modifier = modifier,
     )
 }
@@ -80,6 +87,9 @@ fun DetalhesLivroContent(
     onVoltarClick: () -> Unit,
     onToggleDescricao: () -> Unit,
     onTentarNovamente: () -> Unit,
+    onAbrirConfirmacaoReserva: () -> Unit,
+    onFecharConfirmacaoReserva: () -> Unit,
+    onConfirmarReserva: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -115,8 +125,8 @@ fun DetalhesLivroContent(
             if (uiState.livro != null) {
                 BarraFixaReserva(
                     disponivel = uiState.livro.disponivel,
-                    botaoHabilitado = false, // Desativado conforme instrução
-                    onReservarClick = {},
+                    botaoHabilitado = uiState.livro.disponivel,
+                    onReservarClick = onAbrirConfirmacaoReserva,
                 )
             }
         },
@@ -305,6 +315,109 @@ fun DetalhesLivroContent(
             }
         }
     }
+
+    // Modal BottomSheet de Confirmação da Reserva
+    if (uiState.mostrarBottomSheetConfirmacao && uiState.livro != null) {
+        val livro = uiState.livro
+        ModalBottomSheet(
+            onDismissRequest = onFecharConfirmacaoReserva,
+            sheetState = rememberModalBottomSheetState(),
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(Space.s5),
+                verticalArrangement = Arrangement.spacedBy(Space.s4),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    text = "Confirmar reserva",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.align(Alignment.Start),
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(Space.s3),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    CapaSubstituta(
+                        titulo = livro.titulo,
+                        autor = livro.autores.joinToString(", "),
+                        modifier = Modifier
+                            .width(52.dp)
+                            .height(78.dp),
+                    )
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = livro.titulo,
+                            style = AppTextStyles.button,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        Text(
+                            text = livro.autores.joinToString(", "),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                }
+
+                Text(
+                    text = "Você terá até às 18h de ${uiState.prazoTextualFormatted.lowercase()} para retirar na Biblioteca Central.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+
+                if (uiState.erroReserva != null) {
+                    Text(
+                        text = uiState.erroReserva,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(Space.s2),
+                ) {
+                    Button(
+                        onClick = onConfirmarReserva,
+                        enabled = !uiState.isReservando,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 56.dp),
+                        shape = MaterialTheme.shapes.medium,
+                    ) {
+                        if (uiState.isReservando) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                color = MaterialTheme.colorScheme.onPrimary,
+                            )
+                        } else {
+                            Text("Confirmar reserva", style = AppTextStyles.button)
+                        }
+                    }
+
+                    OutlinedButton(
+                        onClick = onFecharConfirmacaoReserva,
+                        enabled = !uiState.isReservando,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 56.dp),
+                        shape = MaterialTheme.shapes.medium,
+                    ) {
+                        Text("Cancelar", style = AppTextStyles.button)
+                    }
+                }
+                Spacer(modifier = Modifier.height(Space.s4))
+            }
+        }
+    }
 }
 
 @Composable
@@ -463,6 +576,9 @@ private fun DetalhesLivroScreenLightPreview() {
             onVoltarClick = {},
             onToggleDescricao = {},
             onTentarNovamente = {},
+            onAbrirConfirmacaoReserva = {},
+            onFecharConfirmacaoReserva = {},
+            onConfirmarReserva = {},
         )
     }
 }
@@ -491,6 +607,9 @@ private fun DetalhesLivroScreenDarkPreview() {
             onVoltarClick = {},
             onToggleDescricao = {},
             onTentarNovamente = {},
+            onAbrirConfirmacaoReserva = {},
+            onFecharConfirmacaoReserva = {},
+            onConfirmarReserva = {},
         )
     }
 }
