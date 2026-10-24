@@ -18,8 +18,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.acervia.navigation.NavRoutes
 import com.example.acervia.ui.components.BarraInferior
+import com.example.acervia.ui.screens.catalogo.CatalogoScreen
+import com.example.acervia.ui.screens.catalogo.CatalogoViewModel
 import com.example.acervia.ui.theme.AcerviaTheme
 
 @Composable
@@ -60,9 +63,10 @@ fun MainContainerScreen(
                 )
             }
             composable(NavRoutes.CATALOGO) {
-                TabPlaceholderScreen(
-                    title = "Catálogo",
-                    onOpenBookDetails = { volumeId ->
+                val viewModel: CatalogoViewModel = hiltViewModel()
+                CatalogoScreen(
+                    viewModel = viewModel,
+                    onLivroClick = { volumeId ->
                         rootNavController.navigate("detalhes_livro/$volumeId")
                     },
                 )
