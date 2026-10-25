@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -25,6 +26,7 @@ import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Clear
 import androidx.compose.material.icons.outlined.FilterList
 import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.WifiOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -41,11 +43,15 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -87,6 +93,7 @@ fun CatalogoScreen(
         onMostrarBottomSheetOrdenacao = viewModel::onMostrarBottomSheetOrdenacao,
         onLimparFiltros = viewModel::onLimparFiltros,
         onTentarNovamente = viewModel::carregarLivros,
+        onCarregarMais = viewModel::carregarMaisLivros,
         onLivroClick = onLivroClick,
         modifier = modifier,
     )
@@ -103,10 +110,27 @@ fun CatalogoContent(
     onMostrarBottomSheetOrdenacao: (Boolean) -> Unit,
     onLimparFiltros: () -> Unit,
     onTentarNovamente: () -> Unit,
+    onCarregarMais: () -> Unit,
     onLivroClick: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
+    val listState = rememberLazyListState()
+
+    // Detecção de rolagem infinita
+    val shouldLoadMore = remember {
+        derivedStateOf {
+            val totalItems = listState.layoutInfo.totalItemsCount
+            val lastVisibleItem = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+            totalItems > 0 && lastVisibleItem >= totalItems - 3
+        }
+    }
+
+    LaunchedEffect(shouldLoadMore.value) {
+        if (shouldLoadMore.value && uiState.temProximaPagina && !uiState.isLoadingMais) {
+            onCarregarMais()
+        }
+    }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -120,6 +144,34 @@ fun CatalogoContent(
             verticalArrangement = Arrangement.spacedBy(Space.s3),
         ) {
             Spacer(modifier = Modifier.height(Space.s2))
+
+            // Banner Sem Conexão
+            if (uiState.isSemConexao) {
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(MaterialTheme.shapes.small),
+                    color = MaterialTheme.colorScheme.errorContainer,
+                ) {
+                    Row(
+                        modifier = Modifier.padding(Space.s3),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(Space.s2),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.WifiOff,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.size(20.dp),
+                        )
+                        Text(
+                            text = "Sem conexão. Mostrando os dados salvos.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                    }
+                }
+            }
 
             // 1. Título
             Text(
@@ -246,7 +298,7 @@ fun CatalogoContent(
                         }
                     }
 
-                    uiState.erro != null -> {
+                    uiState.erro != null && !uiState.isSemConexao -> {
                         Column(
                             modifier = Modifier
                                 .fillMaxSize()
@@ -301,6 +353,7 @@ fun CatalogoContent(
 
                     else -> {
                         LazyColumn(
+                            state = listState,
                             modifier = Modifier.fillMaxSize(),
                             verticalArrangement = Arrangement.spacedBy(Space.s3),
                         ) {
@@ -317,6 +370,44 @@ fun CatalogoContent(
                                         color = MaterialTheme.colorScheme.outlineVariant,
                                         modifier = Modifier.padding(top = Space.s3),
                                     )
+                                }
+                            }
+
+                            // Rodapé da Rolagem Infinita
+                            if (uiState.isLoadingMais) {
+                                item {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(Space.s4),
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(24.dp),
+                                            color = MaterialTheme.colorScheme.primary,
+                                        )
+                                    }
+                                }
+                            }
+
+                            if (uiState.erroCarregarMais != null) {
+                                item {
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(Space.s4),
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.spacedBy(Space.s2),
+                                    ) {
+                                        Text(
+                                            text = uiState.erroCarregarMais,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.error,
+                                        )
+                                        OutlinedButton(onClick = onCarregarMais) {
+                                            Text("Tentar de novo")
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -489,6 +580,7 @@ private fun CatalogoScreenLightPreview() {
             onMostrarBottomSheetOrdenacao = {},
             onLimparFiltros = {},
             onTentarNovamente = {},
+            onCarregarMais = {},
             onLivroClick = {},
         )
     }
@@ -515,6 +607,7 @@ private fun CatalogoScreenDarkPreview() {
             onMostrarBottomSheetOrdenacao = {},
             onLimparFiltros = {},
             onTentarNovamente = {},
+            onCarregarMais = {},
             onLivroClick = {},
         )
     }

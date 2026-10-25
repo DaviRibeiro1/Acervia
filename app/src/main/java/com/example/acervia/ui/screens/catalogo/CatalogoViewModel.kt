@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.io.IOException
 import javax.inject.Inject
 
 data class CatalogoUiState(
@@ -21,9 +22,14 @@ data class CatalogoUiState(
     val soDisponiveis: Boolean = false,
     val ordem: Ordem = Ordem.TITULO,
     val isLoading: Boolean = true,
+    val isLoadingMais: Boolean = false,
     val erro: String? = null,
+    val erroCarregarMais: String? = null,
+    val isSemConexao: Boolean = false,
     val livros: List<LivroResumo> = emptyList(),
     val totalItens: Int = 0,
+    val paginaAtual: Int = 1,
+    val temProximaPagina: Boolean = false,
     val mostrarBottomSheetOrdenacao: Boolean = false,
 )
 
@@ -89,7 +95,14 @@ class CatalogoViewModel @Inject constructor(
 
     fun carregarLivros() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, erro = null) }
+            _uiState.update {
+                it.copy(
+                    isLoading = true,
+                    erro = null,
+                    isSemConexao = false,
+                    paginaAtual = 1,
+                )
+            }
             try {
                 val estado = _uiState.value
                 val pagina = livroRepository.buscar(
@@ -103,6 +116,16 @@ class CatalogoViewModel @Inject constructor(
                         isLoading = false,
                         livros = pagina.itens,
                         totalItens = pagina.itens.size,
+                        paginaAtual = 1,
+                        temProximaPagina = pagina.temProximaPagina,
+                    )
+                }
+            } catch (e: IOException) {
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        isSemConexao = true,
+                        erro = "Sem conexão. Mostrando os dados salvos.",
                     )
                 }
             } catch (e: Exception) {
@@ -110,6 +133,42 @@ class CatalogoViewModel @Inject constructor(
                     it.copy(
                         isLoading = false,
                         erro = e.message ?: "Não conseguimos carregar o catálogo agora.",
+                    )
+                }
+            }
+        }
+    }
+
+    fun carregarMaisLivros() {
+        val estado = _uiState.value
+        if (estado.isLoading || estado.isLoadingMais || !estado.temProximaPagina) {
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoadingMais = true, erroCarregarMais = null) }
+            try {
+                val proximaPaginaNum = estado.paginaAtual + 1
+                val pagina = livroRepository.buscar(
+                    q = estado.query,
+                    soDisponiveis = estado.soDisponiveis,
+                    ordem = estado.ordem,
+                    pagina = proximaPaginaNum,
+                )
+                _uiState.update {
+                    it.copy(
+                        isLoadingMais = false,
+                        livros = it.livros + pagina.itens,
+                        paginaAtual = proximaPaginaNum,
+                        temProximaPagina = pagina.temProximaPagina,
+                        totalItens = it.totalItens + pagina.itens.size,
+                    )
+                }
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(
+                        isLoadingMais = false,
+                        erroCarregarMais = "Não foi possível carregar mais.",
                     )
                 }
             }
