@@ -27,14 +27,15 @@ import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.LocationOn
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -42,6 +43,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -281,43 +283,74 @@ fun SuaReservaContent(
         }
     }
 
-    // Diálogo de Confirmação de Cancelamento
+    // Modal BottomSheet de Confirmação de Cancelamento
     if (uiState.mostrarDialogoCancelamento) {
-        AlertDialog(
+        ModalBottomSheet(
             onDismissRequest = { if (!uiState.isCancelando) onMostrarDialogoCancelamento(false) },
-            title = {
+            sheetState = rememberModalBottomSheetState(),
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(Space.s5),
+                verticalArrangement = Arrangement.spacedBy(Space.s4),
+                horizontalAlignment = Alignment.Start,
+            ) {
                 Text(
                     text = "Cancelar esta reserva?",
                     style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
-            },
-            text = {
+
                 Text(
                     text = "O exemplar volta ao estoque e outra pessoa pode reservá-lo.",
                     style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = onConfirmarCancelamento,
-                    enabled = !uiState.isCancelando,
+
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(Space.s2),
                 ) {
-                    Text(
-                        text = if (uiState.isCancelando) "Cancelando..." else "Cancelar reserva",
-                        color = MaterialTheme.colorScheme.error,
-                        style = AppTextStyles.button,
-                    )
+                    Button(
+                        onClick = { if (!uiState.isCancelando) onMostrarDialogoCancelamento(false) },
+                        enabled = !uiState.isCancelando,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 56.dp),
+                        shape = MaterialTheme.shapes.medium,
+                    ) {
+                        Text(text = "Manter reserva", style = AppTextStyles.button)
+                    }
+
+                    OutlinedButton(
+                        onClick = onConfirmarCancelamento,
+                        enabled = !uiState.isCancelando,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 56.dp),
+                        shape = MaterialTheme.shapes.medium,
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = MaterialTheme.colorScheme.error,
+                        ),
+                    ) {
+                        if (uiState.isCancelando) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                color = MaterialTheme.colorScheme.error,
+                            )
+                        } else {
+                            Text(
+                                text = "Cancelar reserva",
+                                style = AppTextStyles.button,
+                                color = MaterialTheme.colorScheme.error,
+                            )
+                        }
+                    }
                 }
-            },
-            dismissButton = {
-                Button(
-                    onClick = { onMostrarDialogoCancelamento(false) },
-                    enabled = !uiState.isCancelando,
-                ) {
-                    Text(text = "Manter reserva", style = AppTextStyles.button)
-                }
-            },
-        )
+                Spacer(modifier = Modifier.height(Space.s4))
+            }
+        }
     }
 }
 

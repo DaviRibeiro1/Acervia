@@ -12,13 +12,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.acervia.navigation.NavRoutes
 import com.example.acervia.ui.components.BarraInferior
 import com.example.acervia.ui.screens.catalogo.CatalogoScreen
@@ -31,9 +31,10 @@ import com.example.acervia.ui.theme.AcerviaTheme
 fun MainContainerScreen(
     rootNavController: NavHostController = rememberNavController(),
     tabNavController: NavHostController = rememberNavController(),
+    initialTab: String = NavRoutes.HOME,
 ) {
     val navBackStackEntry by tabNavController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route ?: NavRoutes.HOME
+    val currentRoute = navBackStackEntry?.destination?.route ?: initialTab
 
     Scaffold(
         bottomBar = {
@@ -53,7 +54,7 @@ fun MainContainerScreen(
     ) { innerPadding ->
         NavHost(
             navController = tabNavController,
-            startDestination = NavRoutes.HOME,
+            startDestination = initialTab,
             modifier = Modifier.padding(innerPadding),
         ) {
             composable(NavRoutes.HOME) {

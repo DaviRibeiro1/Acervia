@@ -28,7 +28,7 @@ object NavRoutes {
     const val LOGIN = "login"
     const val CODIGO = "codigo"
     const val FALTA_POUCO = "falta_pouco"
-    const val MAIN_CONTAINER = "main_container"
+    const val MAIN_CONTAINER = "main_container?tab={tab}"
     const val HOME = "home"
     const val CATALOGO = "catalogo"
     const val RESERVAS = "reservas"
@@ -40,14 +40,14 @@ object NavRoutes {
 @Composable
 fun AcerviaNavHost(
     navController: NavHostController = rememberNavController(),
-    startDestination: String = NavRoutes.MAIN_CONTAINER,
+    startDestination: String = "main_container?tab=${NavRoutes.HOME}",
 ) {
     NavHost(
         navController = navController,
         startDestination = startDestination,
     ) {
         composable(NavRoutes.SPLASH) {
-            PlaceholderScreen(title = "Splash", onNext = { navController.navigate(NavRoutes.WELCOME) })
+            PlaceholderScreen(title = "Splash", onNext = { navController.navigate("main_container?tab=${NavRoutes.HOME}") })
         }
         composable(NavRoutes.WELCOME) {
             PlaceholderScreen(title = "Welcome", onNext = { navController.navigate(NavRoutes.LOGIN) })
@@ -59,10 +59,22 @@ fun AcerviaNavHost(
             PlaceholderScreen(title = "Código de Acesso", onNext = { navController.navigate(NavRoutes.FALTA_POUCO) })
         }
         composable(NavRoutes.FALTA_POUCO) {
-            PlaceholderScreen(title = "Falta Pouco", onNext = { navController.navigate(NavRoutes.MAIN_CONTAINER) })
+            PlaceholderScreen(title = "Falta Pouco", onNext = { navController.navigate("main_container?tab=${NavRoutes.HOME}") })
         }
-        composable(NavRoutes.MAIN_CONTAINER) {
-            MainContainerScreen(rootNavController = navController)
+        composable(
+            route = NavRoutes.MAIN_CONTAINER,
+            arguments = listOf(
+                navArgument("tab") {
+                    type = NavType.StringType
+                    defaultValue = NavRoutes.HOME
+                },
+            ),
+        ) { backStackEntry ->
+            val initialTab = backStackEntry.arguments?.getString("tab") ?: NavRoutes.HOME
+            MainContainerScreen(
+                rootNavController = navController,
+                initialTab = initialTab,
+            )
         }
         composable(NavRoutes.DETALHES_LIVRO) {
             val viewModel: DetalhesLivroViewModel = hiltViewModel()
@@ -89,8 +101,8 @@ fun AcerviaNavHost(
                 viewModel = viewModel,
                 onVoltarClick = { navController.popBackStack() },
                 onVerMinhasReservasClick = {
-                    navController.navigate(NavRoutes.MAIN_CONTAINER) {
-                        popUpTo(NavRoutes.MAIN_CONTAINER) { inclusive = true }
+                    navController.navigate("main_container?tab=${NavRoutes.RESERVAS}") {
+                        popUpTo("main_container?tab=${NavRoutes.HOME}") { inclusive = true }
                     }
                 },
                 onLivroClick = { volumeId ->
