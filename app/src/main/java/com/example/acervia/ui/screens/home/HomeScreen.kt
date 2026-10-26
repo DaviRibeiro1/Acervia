@@ -5,6 +5,13 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.res.Configuration
 import android.widget.Toast
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -27,7 +34,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -43,6 +49,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.heading
@@ -118,12 +126,7 @@ fun HomeContent(
             Box(modifier = Modifier.fillMaxSize()) {
                 when {
                     uiState.isLoading && !uiState.isRefreshing -> {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-                        }
+                        HomeSkeletonLoading()
                     }
 
                     uiState.erro != null -> {
@@ -142,6 +145,26 @@ fun HomeContent(
                             Spacer(modifier = Modifier.height(Space.s4))
                             Button(onClick = onTentarNovamente) {
                                 Text("Tentar de novo")
+                            }
+                        }
+                    }
+
+                    uiState.reservaAtiva == null && uiState.livrosDestaque.isEmpty() -> {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(Space.s5),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center,
+                        ) {
+                            Text(
+                                text = "Nenhum destaque disponível no momento.",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
+                            Spacer(modifier = Modifier.height(Space.s4))
+                            Button(onClick = onAtalhoBuscaClick) {
+                                Text("Explorar catálogo", style = AppTextStyles.button)
                             }
                         }
                     }
@@ -324,6 +347,110 @@ fun HomeContent(
 }
 
 @Composable
+private fun HomeSkeletonLoading(modifier: Modifier = Modifier) {
+    val transition = rememberInfiniteTransition(label = "shimmer")
+    val translateAnim by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1000f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1200, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart,
+        ),
+        label = "shimmer_float",
+    )
+
+    val shimmerBrush = Brush.linearGradient(
+        colors = listOf(
+            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
+            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
+            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
+        ),
+        start = Offset(translateAnim - 500f, translateAnim - 500f),
+        end = Offset(translateAnim, translateAnim),
+    )
+
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(horizontal = Space.s5, vertical = Space.s3),
+        verticalArrangement = Arrangement.spacedBy(Space.s5),
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(Space.s2)) {
+            Box(
+                modifier = Modifier
+                    .width(120.dp)
+                    .height(24.dp)
+                    .clip(MaterialTheme.shapes.small)
+                    .background(shimmerBrush),
+            )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(0.8f)
+                    .height(32.dp)
+                    .clip(MaterialTheme.shapes.small)
+                    .background(shimmerBrush),
+            )
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp)
+                .clip(MaterialTheme.shapes.medium)
+                .background(shimmerBrush),
+        )
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(180.dp)
+                .clip(MaterialTheme.shapes.medium)
+                .background(shimmerBrush),
+        )
+
+        Column(verticalArrangement = Arrangement.spacedBy(Space.s3)) {
+            Box(
+                modifier = Modifier
+                    .width(180.dp)
+                    .height(24.dp)
+                    .clip(MaterialTheme.shapes.small)
+                    .background(shimmerBrush),
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(Space.s4)) {
+                repeat(3) {
+                    Column(
+                        modifier = Modifier.width(132.dp),
+                        verticalArrangement = Arrangement.spacedBy(Space.s2),
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .width(132.dp)
+                                .height(198.dp)
+                                .clip(MaterialTheme.shapes.medium)
+                                .background(shimmerBrush),
+                        )
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(0.8f)
+                                .height(16.dp)
+                                .clip(MaterialTheme.shapes.small)
+                                .background(shimmerBrush),
+                        )
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(0.5f)
+                                .height(14.dp)
+                                .clip(MaterialTheme.shapes.small)
+                                .background(shimmerBrush),
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun CartaoDestaqueItem(
     livro: LivroResumo,
     onLivroClick: () -> Unit,
@@ -400,6 +527,22 @@ private fun CartaoDestaqueItem(
         SeloDisponibilidade(
             disponivel = livro.disponivel,
             textoPersonalizado = if (livro.disponivel) "${livro.exemplaresDisponiveis} disponíveis" else "Indisponível",
+        )
+    }
+}
+
+@Preview(name = "Home Loading Skeleton - Claro", showBackground = true)
+@Composable
+private fun HomeSkeletonLoadingLightPreview() {
+    AcerviaTheme(darkTheme = false) {
+        HomeContent(
+            uiState = HomeUiState(isLoading = true),
+            onRefresh = {},
+            onAtalhoBuscaClick = {},
+            onVerTodasReservasClick = {},
+            onReservaClick = {},
+            onLivroClick = {},
+            onTentarNovamente = {},
         )
     }
 }
