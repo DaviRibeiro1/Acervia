@@ -1,7 +1,6 @@
 package com.example.acervia.ui.screens.main
 
 import android.content.res.Configuration
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
@@ -21,6 +20,8 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.acervia.navigation.NavRoutes
 import com.example.acervia.ui.components.BarraInferior
+import com.example.acervia.ui.screens.ajustes.AjustesScreen
+import com.example.acervia.ui.screens.ajustes.AjustesViewModel
 import com.example.acervia.ui.screens.catalogo.CatalogoScreen
 import com.example.acervia.ui.screens.catalogo.CatalogoViewModel
 import com.example.acervia.ui.screens.home.HomeScreen
@@ -117,31 +118,17 @@ fun MainContainerScreen(
                 )
             }
             composable(NavRoutes.AJUSTES) {
-                TabPlaceholderScreen(
-                    title = "Ajustes",
-                    onOpenBookDetails = { volumeId ->
-                        rootNavController.navigate("detalhes_livro/$volumeId")
+                val viewModel: AjustesViewModel = hiltViewModel()
+                AjustesScreen(
+                    viewModel = viewModel,
+                    onLogoutConcluido = {
+                        rootNavController.navigate(NavRoutes.LOGIN) {
+                            popUpTo("main_container?tab=${NavRoutes.HOME}") { inclusive = true }
+                        }
                     },
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun TabPlaceholderScreen(
-    title: String,
-    onOpenBookDetails: (String) -> Unit,
-) {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text = "Aba: $title",
-            style = MaterialTheme.typography.headlineMedium,
-            color = MaterialTheme.colorScheme.primary,
-        )
     }
 }
 
