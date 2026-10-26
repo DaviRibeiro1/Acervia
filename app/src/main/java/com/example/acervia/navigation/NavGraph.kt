@@ -61,7 +61,9 @@ fun AcerviaNavHost(
         composable(NavRoutes.WELCOME) {
             WelcomeScreen(
                 onComecarClick = {
-                    navController.navigate(NavRoutes.LOGIN)
+                    navController.navigate(NavRoutes.LOGIN) {
+                        popUpTo(NavRoutes.WELCOME) { inclusive = true }
+                    }
                 },
             )
         }

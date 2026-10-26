@@ -27,10 +27,10 @@ class FakeAuthRepository @Inject constructor(
         ),
     )
 
-    private val _sessao = MutableStateFlow<Sessao?>(sessaoDemo)
+    private val _sessao = MutableStateFlow<Sessao?>(null)
     override val sessao: Flow<Sessao?> = _sessao.asStateFlow()
 
-    private val _primeiroAcesso = MutableStateFlow(false)
+    private val _primeiroAcesso = MutableStateFlow(true)
     val primeiroAcessoFlow: Flow<Boolean> = _primeiroAcesso.asStateFlow()
 
     fun marcarPrimeiroAcessoConcluido() {
@@ -50,6 +50,7 @@ class FakeAuthRepository @Inject constructor(
                 perfil = if (email == "marina@exemplo.com") sessaoDemo.perfil else null,
             )
             _sessao.value = novaSessao
+            _primeiroAcesso.value = false
             ResultadoLogin.Sucesso(
                 sessao = novaSessao,
                 contaNova = novaSessao.perfil == null,
@@ -62,6 +63,7 @@ class FakeAuthRepository @Inject constructor(
     override suspend fun entrarComGoogle(): ResultadoLogin {
         demoConfig.simularLatenciaEFalhas()
         _sessao.value = sessaoDemo
+        _primeiroAcesso.value = false
         return ResultadoLogin.Sucesso(sessao = sessaoDemo, contaNova = false)
     }
 
@@ -70,7 +72,14 @@ class FakeAuthRepository @Inject constructor(
         val atual = _sessao.value
         if (atual != null) {
             _sessao.value = atual.copy(perfil = perfil)
+        } else {
+            _sessao.value = Sessao(
+                usuarioId = "usr_${System.currentTimeMillis()}",
+                email = "usuario@exemplo.com",
+                perfil = perfil,
+            )
         }
+        _primeiroAcesso.value = false
     }
 
     override suspend fun sair() {
