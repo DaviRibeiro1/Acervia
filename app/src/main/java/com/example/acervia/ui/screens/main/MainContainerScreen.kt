@@ -23,6 +23,8 @@ import com.example.acervia.navigation.NavRoutes
 import com.example.acervia.ui.components.BarraInferior
 import com.example.acervia.ui.screens.catalogo.CatalogoScreen
 import com.example.acervia.ui.screens.catalogo.CatalogoViewModel
+import com.example.acervia.ui.screens.home.HomeScreen
+import com.example.acervia.ui.screens.home.HomeViewModel
 import com.example.acervia.ui.screens.reservas.ReservasScreen
 import com.example.acervia.ui.screens.reservas.ReservasViewModel
 import com.example.acervia.ui.theme.AcerviaTheme
@@ -58,9 +60,31 @@ fun MainContainerScreen(
             modifier = Modifier.padding(innerPadding),
         ) {
             composable(NavRoutes.HOME) {
-                TabPlaceholderScreen(
-                    title = "Início",
-                    onOpenBookDetails = { volumeId ->
+                val viewModel: HomeViewModel = hiltViewModel()
+                HomeScreen(
+                    viewModel = viewModel,
+                    onAtalhoBuscaClick = {
+                        tabNavController.navigate(NavRoutes.CATALOGO) {
+                            popUpTo(tabNavController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    onVerTodasReservasClick = {
+                        tabNavController.navigate(NavRoutes.RESERVAS) {
+                            popUpTo(tabNavController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    onReservaClick = { reservaId ->
+                        rootNavController.navigate("sua_reserva/$reservaId")
+                    },
+                    onLivroClick = { volumeId ->
                         rootNavController.navigate("detalhes_livro/$volumeId")
                     },
                 )
