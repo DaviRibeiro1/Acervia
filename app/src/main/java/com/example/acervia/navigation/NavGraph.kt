@@ -16,6 +16,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.acervia.ui.screens.auth.SplashScreen
+import com.example.acervia.ui.screens.auth.SplashViewModel
+import com.example.acervia.ui.screens.auth.WelcomeScreen
 import com.example.acervia.ui.screens.detalhes.DetalhesLivroScreen
 import com.example.acervia.ui.screens.detalhes.DetalhesLivroViewModel
 import com.example.acervia.ui.screens.detalhes.SuaReservaScreen
@@ -40,17 +43,29 @@ object NavRoutes {
 @Composable
 fun AcerviaNavHost(
     navController: NavHostController = rememberNavController(),
-    startDestination: String = "main_container?tab=${NavRoutes.HOME}",
+    startDestination: String = NavRoutes.SPLASH,
 ) {
     NavHost(
         navController = navController,
         startDestination = startDestination,
     ) {
         composable(NavRoutes.SPLASH) {
-            PlaceholderScreen(title = "Splash", onNext = { navController.navigate("main_container?tab=${NavRoutes.HOME}") })
+            val viewModel: SplashViewModel = hiltViewModel()
+            SplashScreen(
+                viewModel = viewModel,
+                onNavegar = { rota ->
+                    navController.navigate(rota) {
+                        popUpTo(NavRoutes.SPLASH) { inclusive = true }
+                    }
+                },
+            )
         }
         composable(NavRoutes.WELCOME) {
-            PlaceholderScreen(title = "Welcome", onNext = { navController.navigate(NavRoutes.LOGIN) })
+            WelcomeScreen(
+                onComecarClick = {
+                    navController.navigate(NavRoutes.LOGIN)
+                },
+            )
         }
         composable(NavRoutes.LOGIN) {
             PlaceholderScreen(title = "Login", onNext = { navController.navigate(NavRoutes.CODIGO) })

@@ -30,6 +30,13 @@ class FakeAuthRepository @Inject constructor(
     private val _sessao = MutableStateFlow<Sessao?>(sessaoDemo)
     override val sessao: Flow<Sessao?> = _sessao.asStateFlow()
 
+    private val _primeiroAcesso = MutableStateFlow(false)
+    val primeiroAcessoFlow: Flow<Boolean> = _primeiroAcesso.asStateFlow()
+
+    fun marcarPrimeiroAcessoConcluido() {
+        _primeiroAcesso.value = false
+    }
+
     override suspend fun enviarCodigo(email: String) {
         demoConfig.simularLatenciaEFalhas()
     }
