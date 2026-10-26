@@ -1,14 +1,6 @@
 package com.example.acervia.navigation
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -16,6 +8,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.acervia.ui.screens.auth.CodigoAcessoScreen
+import com.example.acervia.ui.screens.auth.CodigoAcessoViewModel
+import com.example.acervia.ui.screens.auth.FaltaPoucoScreen
+import com.example.acervia.ui.screens.auth.FaltaPoucoViewModel
+import com.example.acervia.ui.screens.auth.LoginScreen
+import com.example.acervia.ui.screens.auth.LoginViewModel
 import com.example.acervia.ui.screens.auth.SplashScreen
 import com.example.acervia.ui.screens.auth.SplashViewModel
 import com.example.acervia.ui.screens.auth.WelcomeScreen
@@ -29,7 +27,7 @@ object NavRoutes {
     const val SPLASH = "splash"
     const val WELCOME = "welcome"
     const val LOGIN = "login"
-    const val CODIGO = "codigo"
+    const val CODIGO = "codigo?email={email}"
     const val FALTA_POUCO = "falta_pouco"
     const val MAIN_CONTAINER = "main_container?tab={tab}"
     const val HOME = "home"
@@ -68,13 +66,52 @@ fun AcerviaNavHost(
             )
         }
         composable(NavRoutes.LOGIN) {
-            PlaceholderScreen(title = "Login", onNext = { navController.navigate(NavRoutes.CODIGO) })
+            val viewModel: LoginViewModel = hiltViewModel()
+            LoginScreen(
+                viewModel = viewModel,
+                onEnviarCodigoSucesso = { email ->
+                    navController.navigate("codigo?email=$email")
+                },
+                onGoogleLoginSucesso = { contaNova ->
+                    val destino = if (contaNova) NavRoutes.FALTA_POUCO else "main_container?tab=${NavRoutes.HOME}"
+                    navController.navigate(destino) {
+                        popUpTo(NavRoutes.LOGIN) { inclusive = true }
+                    }
+                },
+            )
         }
-        composable(NavRoutes.CODIGO) {
-            PlaceholderScreen(title = "Código de Acesso", onNext = { navController.navigate(NavRoutes.FALTA_POUCO) })
+        composable(
+            route = NavRoutes.CODIGO,
+            arguments = listOf(
+                navArgument("email") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                },
+            ),
+        ) {
+            val viewModel: CodigoAcessoViewModel = hiltViewModel()
+            CodigoAcessoScreen(
+                viewModel = viewModel,
+                onVoltarClick = { navController.popBackStack() },
+                onLoginSucesso = { contaNova ->
+                    val destino = if (contaNova) NavRoutes.FALTA_POUCO else "main_container?tab=${NavRoutes.HOME}"
+                    navController.navigate(destino) {
+                        popUpTo(NavRoutes.LOGIN) { inclusive = true }
+                    }
+                },
+            )
         }
         composable(NavRoutes.FALTA_POUCO) {
-            PlaceholderScreen(title = "Falta Pouco", onNext = { navController.navigate("main_container?tab=${NavRoutes.HOME}") })
+            val viewModel: FaltaPoucoViewModel = hiltViewModel()
+            FaltaPoucoScreen(
+                viewModel = viewModel,
+                onVoltarClick = { navController.popBackStack() },
+                onCadastroConcluido = {
+                    navController.navigate("main_container?tab=${NavRoutes.HOME}") {
+                        popUpTo(NavRoutes.WELCOME) { inclusive = true }
+                    }
+                },
+            )
         }
         composable(
             route = NavRoutes.MAIN_CONTAINER,
@@ -123,27 +160,6 @@ fun AcerviaNavHost(
                 onLivroClick = { volumeId ->
                     navController.navigate("detalhes_livro/$volumeId")
                 },
-            )
-        }
-    }
-}
-
-@Composable
-private fun PlaceholderScreen(
-    title: String,
-    onNext: () -> Unit,
-) {
-    Scaffold { innerPadding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text = "Acervia - $title",
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.primary,
             )
         }
     }
