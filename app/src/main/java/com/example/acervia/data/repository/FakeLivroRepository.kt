@@ -1,5 +1,7 @@
 package com.example.acervia.data.repository
 
+import android.content.Context
+import android.content.ContextWrapper
 import com.example.acervia.data.DemoConfig
 import com.example.acervia.domain.model.HomeDados
 import com.example.acervia.domain.model.Livro
@@ -9,15 +11,80 @@ import com.example.acervia.domain.model.Reserva
 import com.example.acervia.domain.model.StatusReserva
 import com.example.acervia.domain.repository.LivroRepository
 import com.example.acervia.domain.repository.Ordem
+import dagger.hilt.android.qualifiers.ApplicationContext
+import org.json.JSONArray
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class FakeLivroRepository @Inject constructor(
+    @param:ApplicationContext private val context: Context,
     private val demoConfig: DemoConfig,
 ) : LivroRepository {
 
-    private val acervoCompleto: List<Livro> = buildList {
+    constructor(demoConfig: DemoConfig, testMode: Boolean = true) : this(
+        context = ContextWrapper(null),
+        demoConfig = demoConfig,
+    )
+
+    private val acervoCompleto: List<Livro> by lazy {
+        val doJson = carregarLivrosDoAsset()
+        doJson.ifEmpty { acervoFallback }
+    }
+
+    private fun carregarLivrosDoAsset(): List<Livro> {
+        return try {
+            val jsonString = context.assets.open("livros.json").bufferedReader().use { it.readText() }
+            val jsonArray = JSONArray(jsonString)
+            val lista = mutableListOf<Livro>()
+
+            for (i in 0 until jsonArray.length()) {
+                val obj = jsonArray.getJSONObject(i)
+                val volumeId = obj.optString("volume_id", "vol_${i + 1}")
+                val isbn13 = obj.optString("isbn13").takeIf { it.isNotBlank() }
+                val titulo = obj.optString("titulo", "Sem título")
+
+                val autoresArray = obj.optJSONArray("autores")
+                val autoresList = mutableListOf<String>()
+                if (autoresArray != null) {
+                    for (j in 0 until autoresArray.length()) {
+                        autoresList.add(autoresArray.getString(j))
+                    }
+                }
+                if (autoresList.isEmpty()) {
+                    autoresList.add("Autor desconhecido")
+                }
+
+                val editora = obj.optString("editora").takeIf { it.isNotBlank() }
+                val paginas = if (obj.has("paginas") && !obj.isNull("paginas")) obj.optInt("paginas") else null
+                val categoria = obj.optString("categoria").takeIf { it.isNotBlank() }
+                val descricao = obj.optString("descricao").takeIf { it.isNotBlank() }
+                val capaUrl = obj.optString("capa_url").takeIf { it.isNotBlank() }
+                val exemplaresTotal = obj.optInt("exemplares", 3)
+
+                lista.add(
+                    Livro(
+                        volumeId = volumeId,
+                        isbn13 = isbn13,
+                        titulo = titulo,
+                        autores = autoresList,
+                        descricao = descricao,
+                        categoria = categoria,
+                        paginas = paginas,
+                        editora = editora,
+                        capaUrl = capaUrl,
+                        exemplaresTotal = exemplaresTotal,
+                        exemplaresDisponiveis = exemplaresTotal,
+                    )
+                )
+            }
+            lista
+        } catch (ignored: Exception) {
+            emptyList()
+        }
+    }
+
+    private val acervoFallback: List<Livro> = buildList {
         add(
             Livro(
                 volumeId = "vol_1",
@@ -43,7 +110,7 @@ class FakeLivroRepository @Inject constructor(
                 categoria = "Ficção Científica",
                 paginas = 416,
                 editora = "Companhia das Letras",
-                capaUrl = null, // Edge case: Sem capa
+                capaUrl = null,
                 exemplaresTotal = 5,
                 exemplaresDisponiveis = 2,
             )
@@ -60,7 +127,7 @@ class FakeLivroRepository @Inject constructor(
                 editora = "Editora Aleph",
                 capaUrl = null,
                 exemplaresTotal = 4,
-                exemplaresDisponiveis = 1, // Edge case: 1 exemplar disponível
+                exemplaresDisponiveis = 1,
             )
         )
         add(
@@ -75,7 +142,7 @@ class FakeLivroRepository @Inject constructor(
                 editora = "José Olympio",
                 capaUrl = null,
                 exemplaresTotal = 2,
-                exemplaresDisponiveis = 0, // Edge case: Indisponível (0 exemplares)
+                exemplaresDisponiveis = 0,
             )
         )
         add(
@@ -103,7 +170,7 @@ class FakeLivroRepository @Inject constructor(
                 categoria = "Fantasia",
                 paginas = 576,
                 editora = "HarperCollins",
-                capaUrl = null, // Edge case: Título muito longo
+                capaUrl = null,
                 exemplaresTotal = 4,
                 exemplaresDisponiveis = 2,
             )
@@ -114,7 +181,7 @@ class FakeLivroRepository @Inject constructor(
                 isbn13 = "9788535909555",
                 titulo = "A Revolução dos Bichos",
                 autores = listOf("George Orwell"),
-                descricao = null, // Edge case: Sem descrição
+                descricao = null,
                 categoria = "Sátira Política",
                 paginas = 152,
                 editora = "Companhia das Letras",
@@ -131,7 +198,7 @@ class FakeLivroRepository @Inject constructor(
                 autores = listOf("Guimarães Rosa"),
                 descricao = "O ex-jagunço Riobaldo conta sua trajetória pelo sertão brasileiro e suas reflexões existenciais.",
                 categoria = "Literatura Brasileira",
-                paginas = null, // Edge case: Sem número de páginas
+                paginas = null,
                 editora = "Companhia das Letras",
                 capaUrl = null,
                 exemplaresTotal = 2,
@@ -139,7 +206,6 @@ class FakeLivroRepository @Inject constructor(
             )
         )
 
-        // Gerar livros adicionais para totalizar 50 exemplares (para testar paginação infinita com páginas de 20 itens)
         val generos = listOf("Ficção", "História", "Filosofia", "Biografia", "Ciência")
         for (i in 9..50) {
             add(
@@ -163,10 +229,10 @@ class FakeLivroRepository @Inject constructor(
     private val mockReservaAtiva = Reserva(
         id = "res_101",
         usuarioId = "usr_1",
-        volumeId = "vol_1",
-        livroTitulo = "A Biblioteca da Meia-Noite",
-        livroAutor = "Matt Haig",
-        capaUrl = null,
+        volumeId = "qmE0EQAAQBAJ",
+        livroTitulo = "Dom Casmurro",
+        livroAutor = "Machado de Assis",
+        capaUrl = "https://books.google.com/books/publisher/content?id=qmE0EQAAQBAJ&printsec=frontcover&img=1&zoom=1&imgtk=AFLRE71rCNDl_txW2Yiw5X3tuvA_seFzem3sCBAiAeUYi3MhiPIEuV6KeYnXq0RgTaq048_O9ZL67JYMQFZFlxEnK76TEkAQUoTS2DRsTxZNKVcjSTB1U2xzpX24hoXAa-7T1nN0hTbQ&source=gbs_api",
         codigoRetirada = "482716",
         status = StatusReserva.ATIVA,
         reservadoEm = System.currentTimeMillis() - (3600 * 1000 * 5),
