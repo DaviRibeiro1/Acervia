@@ -96,8 +96,7 @@ fun DetalhesLivroContent(
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
-        modifier = modifier.fillMaxSize()
-            .windowInsetsPadding(WindowInsets.navigationBars),
+        modifier = modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
                 title = {
@@ -500,7 +499,8 @@ private fun BarraFixaReserva(
     modifier: Modifier = Modifier,
 ) {
     Surface(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth()
+            .windowInsetsPadding(WindowInsets.navigationBars),
         color = MaterialTheme.colorScheme.surface,
         tonalElevation = 0.dp,
     ) {
