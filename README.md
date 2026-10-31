@@ -1,19 +1,64 @@
 # Acervia — Aplicativo de Reserva de Livros
 
-O **Acervia** é um aplicativo Android nativo para reservas de livros de biblioteca, desenvolvido em **Kotlin** com **Jetpack Compose**, **Material 3** e **Jetpack Navigation**, seguindo rigorosamente as diretrizes do **Acervia Design System v0.1**.
+O **Acervia** é um aplicativo Android nativo para reservas de livros de biblioteca, desenvolvido em **Kotlin** com **Jetpack Compose**, **Material 3**, **Jetpack Navigation** e **Hilt DI**, seguindo rigorosamente as diretrizes do **Acervia Design System v0.1**.
+
+---
 
 ## 📖 Sobre o Projeto
 
-O Acervia simplifica o processo de descoberta e reserva de livros em bibliotecas. O usuário pode consultar o acervo, realizar reservas e visualizar seu código de retirada de forma rápida e offline no balcão.
+O Acervia simplifica o processo de descoberta e reserva de livros em bibliotecas. O usuário pode consultar o acervo, realizar reservas e visualizar seu código de retirada de 6 dígitos de forma rápida e offline no balcão de atendimento.
 
-### Fluxo de Entrada e Telas
-- **Splash Screen:** Transição suave verificando sessão ativa.
+### Fluxo de Entrada e Navegação
+- **Splash Screen:** Transição suave verificando sessão ativa ($\le 1,5\text{s}$).
 - **Welcome:** Apresentação exibida no primeiro acesso.
 - **Login:** Entrada única por Google Sign-In ou E-mail com código de acesso (OTP de 6 dígitos).
-- **Falta Pouco:** Cadastro e confirmação de perfil para contas novas (Nome, Sobrenome, Data de Nascimento e Termos).
-- **Home:** Painel principal com reservas ativas, código de retirada e destaques do acervo.
-- **Catálogo, Detalhes e Reservas:** Busca, navegação por livros, detalhes de exemplar e gerenciamento de reservas.
-- **Ajustes:** Idioma, aparência (Claro/Escuro/Sistema) e informações da conta.
+- **Falta Pouco:** Cadastro e confirmação de perfil para contas novas (Nome, Sobrenome, Data de Nascimento e validação de idade mínima $\ge 14$ anos).
+- **Home:** Painel principal com saudação personalizada ("Olá, Marina..."), atalho de busca, cartão de reserva ativa com código formatado ($3+3$) e carrossel de destaques.
+- **Catálogo, Detalhes e Reservas:** Busca com debounce de 400ms, rolagem infinita (20 em 20 itens), detalhes do exemplar com prazo de 3 dias úteis e aba de Reservas unificada (Ativas e Histórico).
+- **Ajustes:** Gerenciamento do perfil, seleção de tema (Claro / Escuro / Seguir o sistema), chaves do modo de demonstração e Logout com confirmação modal.
+
+---
+
+## 🔑 Credenciais e Modo de Demonstração
+
+O aplicativo roda com dados locais e simulação de latência (300 a 800ms) para funcionamento 100% offline.
+
+- **E-mail de Teste:** `marina@exemplo.com` (Conta Existente) ou qualquer e-mail novo.
+- **Código de Acesso OTP:** `123456`
+- **Chaves de Teste (em Ajustes):**
+  - **Simular erro de servidor:** Teste de tratamento de exceções na UI.
+  - **Simular sem conexão:** Teste de banners offline e dados salvos no aparelho.
+
+---
+
+## 🏛️ Arquitetura e Diagrama de Dados
+
+```
++-----------------------------------------------------------------+
+|                       UI Layer (Compose)                        |
+|  HomeScreen | CatalogoScreen | ReservasScreen | AjustesScreen... |
++-----------------------------------------------------------------+
+                                |
+                                v
++-----------------------------------------------------------------+
+|                    ViewModel Layer (StateFlow)                  |
+|   HomeViewModel | CatalogoViewModel | ReservasViewModel...      |
++-----------------------------------------------------------------+
+                                |
+                                v
++-----------------------------------------------------------------+
+|               Domain Layer (Clean Architecture)                 |
+|  LivroRepository | ReservaRepository | AuthRepository           |
+|  CalcularPrazoReserva | CalcularDisponibilidade                 |
++-----------------------------------------------------------------+
+                                |
+                                v
++-----------------------------------------------------------------+
+|                 Data Layer (Hilt @Singleton Demo)               |
+|  FakeLivroRepository | FakeReservaRepository | FakeAuthRepo    |
+|  livros.json (Acervo Local com 45+ Obras & Casos Extremos)      |
++-----------------------------------------------------------------+
+```
 
 ---
 
@@ -28,23 +73,12 @@ O aplicativo utiliza o **Acervia Design System v0.1**, provido via `ui.theme`:
 
 ---
 
-## 🛠️ Arquitetura e Tecnologias
-
-- **Linguagem:** Kotlin
-- **UI Toolkit:** Jetpack Compose com Material 3
-- **Navegação:** Jetpack Navigation Compose
-- **Imagens:** Coil Compose
-- **Injeção e Dados:** Inversão de dependências com Repositórios Fake/Locais para desenvolvimento e prototipagem offline.
-
----
-
 ## 🔄 Integração Contínua (CI)
 
 O projeto conta com Integração Contínua configurada via **GitHub Actions** (`.github/workflows/android.yml`), executando automaticamente a cada `push` e `pull_request`:
 - **Ambiente:** Ubuntu Latest com JDK 21
-- **Testes Unitários:** `./gradlew testDebugUnitTest`
+- **Testes Unitários:** `./gradlew testDebugUnitTest` (17 testes executados)
 - **Compilação do App:** `./gradlew assembleDebug`
-- **Relatórios:** Upload automático de relatórios dos testes executados.
 
 ---
 
@@ -54,8 +88,9 @@ O projeto conta com Integração Contínua configurada via **GitHub Actions** (`
 2. Sincronize o projeto com os arquivos do Gradle.
 3. Execute no emulador ou dispositivo físico (Android 7.0+ / API 24+).
 
-Para compilar via linha de comando:
+Para compilar e testar via linha de comando:
 ```bash
+./gradlew testDebugUnitTest
 ./gradlew assembleDebug
 ```
 

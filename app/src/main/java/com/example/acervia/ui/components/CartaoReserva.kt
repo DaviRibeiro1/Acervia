@@ -28,7 +28,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.ExperimentalTextApi
+import androidx.compose.ui.text.VerbatimTtsAnnotation
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withAnnotation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.SubcomposeAsyncImage
@@ -37,6 +41,7 @@ import com.example.acervia.ui.theme.AcerviaTheme
 import com.example.acervia.ui.theme.AppTextStyles
 import com.example.acervia.ui.theme.Space
 
+@OptIn(ExperimentalTextApi::class)
 @Composable
 fun CartaoReserva(
     prazoTexto: String,
@@ -171,8 +176,13 @@ fun CartaoReserva(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
+                    val codigoTts = buildAnnotatedString {
+                        withAnnotation(VerbatimTtsAnnotation(verbatim = codigoFormatado.filter { it.isDigit() })) {
+                            append(codigoFormatado)
+                        }
+                    }
                     Text(
-                        text = codigoFormatado,
+                        text = codigoTts,
                         style = AppTextStyles.otp,
                         color = if (copiarHabilitado) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
                     )

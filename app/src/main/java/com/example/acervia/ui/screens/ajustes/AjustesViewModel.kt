@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.acervia.data.DemoConfig
 import com.example.acervia.domain.repository.AuthRepository
+import com.example.acervia.domain.repository.PreferenciasRepository
+import com.example.acervia.ui.theme.TemaOpcao
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -27,6 +29,7 @@ data class AjustesUiState(
 @HiltViewModel
 class AjustesViewModel @Inject constructor(
     private val authRepository: AuthRepository,
+    private val preferenciasRepository: PreferenciasRepository,
     private val demoConfig: DemoConfig,
 ) : ViewModel() {
 
@@ -35,6 +38,20 @@ class AjustesViewModel @Inject constructor(
 
     init {
         carregarPerfil()
+        observarTema()
+    }
+
+    private fun observarTema() {
+        viewModelScope.launch {
+            preferenciasRepository.temaEscolhido.collect { temaOpcao ->
+                val rotulo = when (temaOpcao) {
+                    TemaOpcao.CLARO -> "Claro"
+                    TemaOpcao.ESCURO -> "Escuro"
+                    TemaOpcao.SISTEMA -> "Sistema"
+                }
+                _uiState.update { it.copy(temaAtual = rotulo) }
+            }
+        }
     }
 
     fun carregarPerfil() {
@@ -75,7 +92,15 @@ class AjustesViewModel @Inject constructor(
     }
 
     fun onTemaSelecionado(novoTema: String) {
-        _uiState.update { it.copy(temaAtual = novoTema, mostrarBottomSheetAparencia = false) }
+        val opcao = when (novoTema) {
+            "Claro" -> TemaOpcao.CLARO
+            "Escuro" -> TemaOpcao.ESCURO
+            else -> TemaOpcao.SISTEMA
+        }
+        viewModelScope.launch {
+            preferenciasRepository.salvarTema(opcao)
+            _uiState.update { it.copy(temaAtual = novoTema, mostrarBottomSheetAparencia = false) }
+        }
     }
 
     fun onMostrarBottomSheetSair(mostrar: Boolean) {

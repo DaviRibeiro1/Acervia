@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
@@ -40,7 +39,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.ExperimentalTextApi
+import androidx.compose.ui.text.VerbatimTtsAnnotation
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withAnnotation
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -244,8 +247,14 @@ private fun CaixasOtpInput(
                         color = MaterialTheme.colorScheme.surface,
                     ) {
                         Box(contentAlignment = Alignment.Center) {
+                            val charTts = buildAnnotatedString {
+                                @OptIn(ExperimentalTextApi::class)
+                                withAnnotation(VerbatimTtsAnnotation(verbatim = char)) {
+                                    append(char)
+                                }
+                            }
                             Text(
-                                text = char,
+                                text = charTts,
                                 style = AppTextStyles.otp,
                                 color = MaterialTheme.colorScheme.onSurface,
                             )
